@@ -1,41 +1,22 @@
 workflows:
   default-workflow:
-    name: Build 4K App
-    max_build_duration: 35
+    name: Build 4K App (Android & iOS)
+    max_build_duration: 40
     environment:
       flutter: stable
       xcode: latest
 
     scripts:
-      # 1️⃣ Limpieza y dependencias
       - flutter clean
       - flutter pub get
-
-      # 2️⃣ Verificación opcional de MainActivity.kt (puedes eliminar si ya confías en tu estructura)
-      - name: Confirm MainActivity embedding
-        script: |
-          echo "Verificando MainActivity.kt..."
-          FILE=$(find android/app/src/main/kotlin -name MainActivity.kt)
-          if grep -q "io.flutter.app.FlutterActivity" "$FILE"; then
-            echo "❌ ERROR: MainActivity usa embedding v1. Cambia a embedding.android.FlutterActivity"
-            exit 1
-          else
-            echo "✅ MainActivity.kt usa embedding v2."
-          fi
-
-      # 3️⃣ Análisis y pruebas
       - flutter analyze
       - flutter test
-
-      # 4️⃣ Build APK Release
       - flutter build apk --release
-
-      # (Opcional) Build iOS desactivado por ahora
-      # - flutter build ios --release --no-codesign
+      - flutter build ios --release --no-codesign
 
     artifacts:
       - build/**/outputs/**/*.apk
-      # - build/ios/ipa/*.ipa
+      - build/ios/ipa/*.ipa
 
     triggering:
       events:
