@@ -31,7 +31,7 @@ class _HomePageState extends ConsumerState<HomePage> {
     await cam.startSession();
     // Carga el stream solo cuando la sesión está activa
     await _player.open(
-      const Media('rtsp://192.168.88.1/livestream/12'),
+      Media('rtsp://192.168.88.1/livestream/12'),
     );
     setState(() => _connected = true);
   }
