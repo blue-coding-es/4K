@@ -20,6 +20,7 @@ workflows:
           fi
       # 3️⃣ Dependencias, análisis estático y tests
       - flutter pub get
+      - flutter clean
       - flutter analyze
       - flutter test
       # 4️⃣ Builds de producción (sin firma iOS por ahora)
