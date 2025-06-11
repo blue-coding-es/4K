@@ -1,27 +1,38 @@
 workflows:
   default-workflow:
     name: Flutter CI
-    max_build_duration: 30
+    max_build_duration: 30          # minutos
     environment:
-      flutter: stable          # Flutter preinstalado en Codemagic
-      xcode: latest
+      flutter: stable               # Canal «stable» preinstalado en Codemagic
+      xcode: latest                 # Xcode 16 (SDK iOS 18)
     scripts:
-       - name: Ensure Flutter project structure
-    script: |
-      if [ ! -d "android" ]; then
-        echo "Generating missing native folders…"
-        flutter create . --platforms=android,ios,web
-      fi
-      # ⚡ Elimina el test de plantilla que llama a MyApp
-      if [ -f "test/widget_test.dart" ]; then
-        rm test/widget_test.dart
-        echo "Removed default widget_test.dart"
-      fi
-    - flutter pub get
-    - flutter analyze
-    - flutter test
-    - flutter build apk --release
-    - flutter build ios --release --no-codesign
+      # 1️⃣ Genera carpetas nativas si aún no existen
+      - name: Ensure Flutter project structure
+        script: |
+          if [ ! -d "android" ]; then
+            echo "Generating missing native folders…"
+            flutter create . --platforms=android,ios,web
+          fi
+          # 2️⃣ Elimina el test de plantilla que referencia MyApp
+          if [ -f "test/widget_test.dart" ]; then
+            rm test/widget_test.dart
+            echo "Removed default widget_test.dart"
+          fi
+      # 3️⃣ Dependencias, análisis estático y tests
+      - flutter pub get
+      - flutter analyze
+      - flutter test
+      # 4️⃣ Builds de producción (sin firma iOS por ahora)
+      - flutter build apk --release
+      - flutter build ios --release --no-codesign
     artifacts:
+      # Archivos de salida que Codemagic mostrará para descargar
       - build/**/outputs/**/*.apk
       - build/ios/ipa/*.ipa
+    # Opcional: dispara automáticamente en cada push a main
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: "main"
+          include: true
