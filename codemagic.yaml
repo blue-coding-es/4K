@@ -7,51 +7,44 @@ workflows:
       xcode: latest
 
     scripts:
-      # 1️⃣ Genera carpetas nativas si aún no existen
       - name: Ensure Flutter project structure
         script: |
+          # Genera o regenera las carpetas nativas
           if [ ! -d "android" ]; then
-            echo "Generating missing native folders…"
-            flutter create . --platforms=android,ios,web
+            flutter create . --platforms=android,ios,web --overwrite
           fi
 
-          # 2️⃣ Elimina el test de plantilla que referencia MyApp
-          if [ -f "test/widget_test.dart" ]; then
-            rm test/widget_test.dart
-          fi
+          # Limpia el test de plantilla
+          [ -f test/widget_test.dart ] && rm test/widget_test.dart
 
-          # 3️⃣ Parchea packagingOptions en android/app/build.gradle (media_kit)
+          # Parchea packagingOptions SOLO si el archivo existe
           GRADLE_FILE="android/app/build.gradle"
-          if ! grep -q 'pickFirst "lib/.*/libc++_shared.so"' "$GRADLE_FILE"; then
+          if [ -f "$GRADLE_FILE" ] && ! grep -q 'pickFirst "lib/.*/libc++_shared.so"' "$GRADLE_FILE"; then
             echo "Patching packagingOptions…"
             awk '
               /android[[:space:]]*{/ {
-                print;
-                print "    packagingOptions {";
-                print "        pickFirst \\\"lib/**/libc++_shared.so\\\"";
-                print "    }";
+                print
+                print "    packagingOptions {"
+                print "        pickFirst \\\"lib/**/libc++_shared.so\\\""
+                print "    }"
                 next
               }
               { print }
             ' "$GRADLE_FILE" > "$GRADLE_FILE.tmp" && mv "$GRADLE_FILE.tmp" "$GRADLE_FILE"
           fi
 
-      # 4️⃣ Dependencias, limpieza y análisis
       - flutter pub get
       - flutter clean
       - flutter analyze
       - flutter test
-
-      # 5️⃣ Build Android (reemplace -v por release normal cuando todo pase)
-      - flutter build apk --release
+      - flutter build apk --release    # Reactiva iOS cuando el APK pase
 
     artifacts:
       - build/**/outputs/**/*.apk
-      # - build/ios/ipa/*.ipa   # Descomenta cuando actives iOS
 
     triggering:
-      events:
-        - push
+      events: [push]
       branch_patterns:
         - pattern: "main"
           include: true
+
