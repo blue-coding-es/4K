@@ -1,6 +1,4 @@
 {
-  "image": "mcr.microsoft.com/devcontainers/flutter",
-  "customizations": {
-    "vscode": { "extensions": ["Dart-Code.flutter"] }
-  }
+    "image": "cirrusci/flutter:beta",
+    "forwardPorts": [3000]
 }
