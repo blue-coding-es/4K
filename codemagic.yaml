@@ -7,16 +7,17 @@ workflows:
       xcode: latest
 
     scripts:
+      # 1️⃣ Genera estructura nativa
       - name: Generate native folders and patch build.gradle
         script: |
           if [ ! -d "android" ]; then
             flutter create . --platforms=android,ios,web --overwrite
           fi
 
-          # Remove default test if exists
+          # Borra test de plantilla
           [ -f test/widget_test.dart ] && rm test/widget_test.dart
 
-          # Patch packagingOptions if needed
+          # Parchado automático para media_kit
           GRADLE_FILE="android/app/build.gradle"
           if [ -f "$GRADLE_FILE" ] && ! grep -q 'pickFirst "lib/.*/libc++_shared.so"' "$GRADLE_FILE"; then
             awk '
@@ -31,21 +32,38 @@ workflows:
             ' "$GRADLE_FILE" > "$GRADLE_FILE.tmp" && mv "$GRADLE_FILE.tmp" "$GRADLE_FILE"
           fi
 
-      - name: Clean cache and dependencies
-        script: |
-          flutter clean
-          rm -rf ~/.pub-cache
-          flutter pub get
+      # 2️⃣ Limpieza total y reinstalación de dependencias
+      - flutter clean
+      - rm -rf ~/.pub-cache
+      - flutter pub get
 
-      - name: Detect plugins using Android embedding v1
+      # 3️⃣ Verificación de plugins v1 (ninguno esperado)
+      - name: Detect plugins using v1
         script: |
-          echo "=== Looking for v1 Android plugins ==="
-          find ~/.pub-cache/hosted -type f -name "*.java" -exec grep -Hn "registerWith(Registrar" {} \; || echo "✅ No v1 plugins found"
+          echo "=== Escaneo de plugins Java ==="
+          grep -R --include=*.java -n "registerWith(Registrar" ~/.pub-cache/hosted || echo "✅ No plugins v1 detectados"
 
+      # 4️⃣ Verificación de MainActivity con embedding v1
+      - name: Check MainActivity.kt for v1 embedding
+        script: |
+          echo "=== Verificando MainActivity.kt ==="
+          MAIN_ACTIVITY=$(find android/app/src/main/kotlin -name MainActivity.kt || true)
+          if [ -f "$MAIN_ACTIVITY" ]; then
+            if grep -q "io.flutter.app.FlutterActivity" "$MAIN_ACTIVITY"; then
+              echo "❌ ERROR: MainActivity.kt usa embedding V1. Debe extender FlutterActivity desde embedding.android"
+              exit 1
+            else
+              echo "✅ MainActivity.kt usa embedding V2 correctamente."
+            fi
+          else
+            echo "⚠️ ADVERTENCIA: MainActivity.kt no encontrado. Si lo has renombrado o eliminado, asegúrate de usar embedding v2."
+          fi
+
+      # 5️⃣ Análisis, test y compilación
       - flutter analyze
       - flutter test
-      - name: Build APK (verbose)
-        script: flutter build apk --release -v
+      - name: Build APK
+        script: flutter build apk --release
 
     artifacts:
       - build/**/outputs/**/*.apk
