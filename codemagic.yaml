@@ -1,10 +1,11 @@
 workflows:
   default-workflow:
     name: Flutter CI
-    max_build_duration: 30          # minutos
+    max_build_duration: 30
     environment:
-      flutter: stable               # canal stable ya instalado en Codemagic
-      xcode: latest                 # Xcode 16 (SDK iOS 18)
+      flutter: stable
+      xcode: latest
+
     scripts:
       # 1️⃣ Genera carpetas nativas si aún no existen
       - name: Ensure Flutter project structure
@@ -13,29 +14,41 @@ workflows:
             echo "Generating missing native folders…"
             flutter create . --platforms=android,ios,web
           fi
+
           # 2️⃣ Elimina el test de plantilla que referencia MyApp
           if [ -f "test/widget_test.dart" ]; then
             rm test/widget_test.dart
-            echo "Removed default widget_test.dart"
           fi
+
           # 3️⃣ Parchea packagingOptions en android/app/build.gradle (media_kit)
           GRADLE_FILE="android/app/build.gradle"
-          if ! grep -q 'pickFirst "lib/**/libc++_shared.so"' "$GRADLE_FILE"; then
-            echo "Patching packagingOptions in build.gradle…"
-            sed -i.bak '/android {/a \
-    packagingOptions {\n        pickFirst "lib/**/libc++_shared.so"\n    }' "$GRADLE_FILE"
+          if ! grep -q 'pickFirst "lib/.*/libc++_shared.so"' "$GRADLE_FILE"; then
+            echo "Patching packagingOptions…"
+            awk '
+              /android[[:space:]]*{/ {
+                print;
+                print "    packagingOptions {";
+                print "        pickFirst \\\"lib/**/libc++_shared.so\\\"";
+                print "    }";
+                next
+              }
+              { print }
+            ' "$GRADLE_FILE" > "$GRADLE_FILE.tmp" && mv "$GRADLE_FILE.tmp" "$GRADLE_FILE"
           fi
+
       # 4️⃣ Dependencias, limpieza y análisis
       - flutter pub get
       - flutter clean
       - flutter analyze
       - flutter test
-      # 5️⃣ Build Android (puedes re-activar iOS cuando APK pase)
-      - flutter build apk --release -v
-      # - flutter build ios --release --no-codesign
+
+      # 5️⃣ Build Android (reemplace -v por release normal cuando todo pase)
+      - flutter build apk --release
+
     artifacts:
       - build/**/outputs/**/*.apk
-      # - build/ios/ipa/*.ipa           # descomenta cuando actives iOS
+      # - build/ios/ipa/*.ipa   # Descomenta cuando actives iOS
+
     triggering:
       events:
         - push
