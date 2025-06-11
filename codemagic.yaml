@@ -3,9 +3,15 @@ workflows:
     name: Flutter CI
     max_build_duration: 30
     environment:
-      flutter: stable
+      flutter: stable          # Flutter preinstalado en Codemagic
       xcode: latest
     scripts:
+      - name: Ensure Flutter project structure
+        script: |
+          if [ ! -d "android" ]; then
+            echo "No native folders found — generating them…"
+            flutter create . --platforms=android,ios,web
+          fi
       - flutter pub get
       - flutter analyze
       - flutter test
