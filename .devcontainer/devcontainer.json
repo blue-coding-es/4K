@@ -1,4 +1,9 @@
 {
-    "image": "cirrusci/flutter:beta",
-    "forwardPorts": [3000]
+  "image": "mcr.microsoft.com/devcontainers/flutter:stable",
+  "customizations": {
+    "vscode": {
+      "extensions": ["Dart-Code.flutter"]
+    }
+  },
+  "postCreateCommand": "flutter doctor -v"
 }
