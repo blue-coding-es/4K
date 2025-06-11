@@ -1,26 +1,26 @@
 workflows:
   default-workflow:
     name: Flutter CI
-    max_build_duration: 30
+    max_build_duration: 35           # minutos (subido a 35 por la descarga de media_kit)
     environment:
-      flutter: stable
-      xcode: latest
+      flutter: stable               # canal estable
+      xcode: latest                 # Xcode 16 (SDK iOS 18)
 
     scripts:
-      - name: Ensure Flutter project structure
+      # 1️⃣ Asegura estructura nativa
+      - name: Generate native folders
         script: |
-          # Genera o regenera las carpetas nativas
           if [ ! -d "android" ]; then
+            echo "Running flutter create …"
             flutter create . --platforms=android,ios,web --overwrite
           fi
-
-          # Limpia el test de plantilla
+          # Borra el test plantilla
           [ -f test/widget_test.dart ] && rm test/widget_test.dart
 
-          # Parchea packagingOptions SOLO si el archivo existe
+          # Parchea packagingOptions solo si aún no está
           GRADLE_FILE="android/app/build.gradle"
           if [ -f "$GRADLE_FILE" ] && ! grep -q 'pickFirst "lib/.*/libc++_shared.so"' "$GRADLE_FILE"; then
-            echo "Patching packagingOptions…"
+            echo "Patching packagingOptions in build.gradle"
             awk '
               /android[[:space:]]*{/ {
                 print
@@ -33,14 +33,30 @@ workflows:
             ' "$GRADLE_FILE" > "$GRADLE_FILE.tmp" && mv "$GRADLE_FILE.tmp" "$GRADLE_FILE"
           fi
 
+      # 2️⃣ Dependencias frescas y caché limpia
       - flutter pub get
       - flutter clean
+      - rm -rf ~/.pub-cache         # purga total (solo para cazar restos v1)
+      - flutter pub get
+
+      # 3️⃣ Lista plugins y busca firmas v1
+      - name: Detect v1 plugins
+        script: |
+          echo "=== .flutter-plugins-dependencies ==="
+          cat .flutter-plugins-dependencies || true
+          echo "=== Searching for registerWith(Registrar …) signatures ==="
+          grep -R --include=*.java -n "registerWith(Registrar" ~/.pub-cache/hosted || echo "No v1 plugins found"
+
+      # 4️⃣ Análisis, tests y build
       - flutter analyze
       - flutter test
-      - flutter build apk --release -v   # Reactiva iOS cuando el APK pase
+      - name: Build APK (verbose)
+        script: flutter build apk --release -v   # usa -v para log detallado
+      # - flutter build ios --release --no-codesign  # actívalo cuando Android compile
 
     artifacts:
       - build/**/outputs/**/*.apk
+      # - build/ios/ipa/*.ipa
 
     triggering:
       events: [push]
