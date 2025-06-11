@@ -11,6 +11,10 @@ dependencies:
     sdk: flutter
   cupertino_icons: ^1.0.6
   flutter_riverpod: ^2.4.0
+  # Streaming de vídeo:
+  media_kit: ^1.1.10          # lógica de reproducción
+  media_kit_video: ^1.2.4     # widget <Video>
+  media_kit_libs_video: ^1.0.4# binarios FFmpeg/HW para Android+iOS
 
 dev_dependencies:
   flutter_test:
