@@ -1,9 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.action_cam">
+
+    <!-- Permisos básicos de red y Wi-Fi local -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <!-- Nearby Wi-Fi (Android 13+) – no obligatorio en versiones previas -->
+    <uses-permission
+        android:name="android.permission.NEARBY_WIFI_DEVICES"
+        android:required="false" />
+
     <application
-        android:label="4K"
+        android:label="4K Action Cam"
         android:icon="@mipmap/ic_launcher">
-        <activity android:name=".MainActivity"
+
+        <!-- Flag OBLIGATORIO para indicar a Flutter que usas embedding v2 -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+
+        <!-- Activity principal -->
+        <activity
+            android:name=".MainActivity"
             android:exported="true"
             android:theme="@style/Theme.AppCompat.Light.NoActionBar">
             <intent-filter>
