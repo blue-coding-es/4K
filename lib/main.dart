@@ -1,7 +1,6 @@
 // reemplaza solo la definición de HomePage
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_vlc_player/flutter_vlc_player.dart';
 import 'providers/camera_provider.dart';
 
 class HomePage extends ConsumerStatefulWidget {
