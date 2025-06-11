@@ -1,44 +1,24 @@
-import 'package:media_kit/media_kit.dart';
-import 'package:media_kit_video/media_kit_video.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class _HomePageState extends ConsumerState<HomePage> {
-  late final player = Player();
-  late final controller = VideoController(player);
+import 'pages/home_page.dart';
 
-  @override
-  void initState() {
-    super.initState();
-    // Cargamos la URL RTSP al arrancar (puedes hacerlo tras “Conectar” si prefieres)
-    player.open(
-      Media(
-        'rtsp://192.168.88.1/livestream/12',
-        // ↓ Opciones FFmpeg para reducir latencia (tune / prueba)
-        extras: {
-          'rtsp_transport': 'tcp',
-          'stimeout': '5000000',      // 5 s timeout
-          'max_delay': '200000',      // 200 ms búfer
-          'buffer_size': '102400'     // 100 KB
-        },
-      ),
-    );
-  }
+void main() {
+  runApp(const ProviderScope(child: ActionCamApp()));
+}
 
-  @override
-  void dispose() {
-    player.dispose();
-    super.dispose();
-  }
+class ActionCamApp extends StatelessWidget {
+  const ActionCamApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('4K Action Cam')),
-      body: Column(
-        children: [
-          Expanded(child: Video(controller: controller)),   // <— Stream RTSP
-          // …botones Conectar / Grabar aquí…
-        ],
+    return MaterialApp(
+      title: '4K Action Cam',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blueAccent),
+        useMaterial3: true,
       ),
+      home: const HomePage(),
     );
   }
 }
