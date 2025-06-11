@@ -37,7 +37,7 @@ workflows:
       - flutter clean
       - flutter analyze
       - flutter test
-      - flutter build apk --release    # Reactiva iOS cuando el APK pase
+      - flutter build apk --release -v   # Reactiva iOS cuando el APK pase
 
     artifacts:
       - build/**/outputs/**/*.apk
