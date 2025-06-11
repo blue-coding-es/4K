@@ -1,0 +1,7 @@
+<key>NSLocalNetworkUsageDescription</key>
+<string>La app necesita acceder a la cámara en tu red local.</string>
+<key>NSBonjourServices</key>
+<array>
+  <string>_http._tcp</string>
+  <string>_rtsp._tcp</string>
+</array>
